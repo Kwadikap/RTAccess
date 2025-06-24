@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    String   @id @default(uuid())
+  name  String
+  email String   @unique
+  avatar String?
+  posts Post[]
+  programs Program[]
+  connectionsFollowed Connection[] @relation("Followed", references: [followedId])
+  connectionsFollower Connection[] @relation("Follower", references: [followerId])
+  messages Message[] @relation("Sender")
+  notifications Notification[]
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+}
+
+model Program {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?
+}
+
+model Connection {
+  followerId String
+  followedId String
+  status     String
+  follower   User @relation("Follower", fields: [followerId], references: [id])
+  followed   User @relation("Followed", fields: [followedId], references: [id])
+
+  @@id([followerId, followedId])
+}
+
+model Message {
+  chatId   String
+  senderId String
+  text     String
+  timestamp DateTime @default(now())
+  sender   User @relation("Sender", fields: [senderId], references: [id])
+
+  @@id([chatId, timestamp])
+}
+
+model Notification {
+  id      String   @id @default(uuid())
+  user    User     @relation(fields: [userId], references: [id])
+  userId  String
+  type    String
+  message String
+  read    Boolean @default(false)
+}
